@@ -1,0 +1,29 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: rgb(249, 171, 44);
+}
+
+.header-title {
+  color: #210808ff;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.header-admin {
+  color: #210808ff;
+  margin-right: 12px;
+  cursor: inherit;
+}
+
+.logout-button {
+  transition: all 0.2s;
+  background-color: rgb(255, 245, 137);
+}
+
+.logout-button:hover {
+  background-color: rgb(251, 214, 27) !important;
+  color: rgb(0, 0, 0) !important;
+  border-color: rgb(0, 0, 0) !important;
+}
