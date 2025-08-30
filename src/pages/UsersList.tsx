@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Card,
   Input,
@@ -7,7 +7,8 @@ import {
   Table,
   Tag,
   Button,
-  Typography,
+  Pagination,
+  ConfigProvider,
 } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { fetchUsers } from '../slices/usersSlice';
@@ -26,6 +27,8 @@ export default function UsersList() {
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
+
+  const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     return list.filter((u: any) => {
@@ -73,54 +76,71 @@ export default function UsersList() {
   ];
 
   return (
-    <Card title="用户列表">
-      <Space style={{ marginBottom: 16 }} wrap>
-        <Input
-          placeholder="搜索名字、学院、学号..."
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          allowClear
-          style={{ width: 240 }}
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: 'rgba(253, 178, 2, 1)',
+        },
+      }}
+    >
+      <Card title="用户列表">
+        <Space style={{ marginBottom: 16 }} wrap>
+          <Input
+            placeholder="搜索名字、学院、学号..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            allowClear
+            style={{ width: 240 }}
+          />
+          <Select
+            value={direction}
+            style={{ width: 160 }}
+            onChange={setDirection}
+            options={[
+              { value: '全部', label: '全部' },
+              { value: '前端', label: '前端' },
+              { value: '后端', label: '后端' },
+            ]}
+          />
+          <Select
+            value={progress}
+            style={{ width: 160 }}
+            onChange={setProgress}
+            options={[
+              { value: '全部', label: '全部' },
+              { value: '一轮考核', label: '一轮考核' },
+              { value: '二轮考核', label: '二轮考核' },
+              { value: '面试', label: '面试' },
+              { value: '未通过', label: '未通过' },
+            ]}
+          />
+          <Button
+            onClick={() => {
+              setKeyword('');
+              setDirection('全部');
+              setProgress('全部');
+            }}
+          >
+            重置
+          </Button>
+        </Space>
+        <Table
+          rowKey="id"
+          loading={loading}
+          columns={columns as any}
+          dataSource={filtered.slice((page - 1) * 6, page * 6)}
+          pagination={false}
+          style={{ height: '60vh' }}
         />
-        <Select
-          value={direction}
-          style={{ width: 160 }}
-          onChange={setDirection}
-          options={[
-            { value: '全部', label: '全部' },
-            { value: '前端', label: '前端' },
-            { value: '后端', label: '后端' },
-          ]}
-        />
-        <Select
-          value={progress}
-          style={{ width: 160 }}
-          onChange={setProgress}
-          options={[
-            { value: '全部', label: '全部' },
-            { value: '一轮考核', label: '一轮考核' },
-            { value: '二轮考核', label: '二轮考核' },
-            { value: '面试', label: '面试' },
-            { value: '未通过', label: '未通过' },
-          ]}
-        />
-        <Button
-          onClick={() => {
-            setKeyword('');
-            setDirection('全部');
-            setProgress('全部');
-          }}
-        >
-          重置
-        </Button>
-      </Space>
-      <Table
-        rowKey="id"
-        loading={loading}
-        columns={columns as any}
-        dataSource={filtered}
-        pagination={{ pageSize: 8 }}
-      />
-    </Card>
+        <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
+          <Pagination
+            current={page}
+            pageSize={6}
+            total={filtered.length}
+            onChange={setPage}
+          />
+        </div>
+      </Card>
+    </ConfigProvider>
   );
 }

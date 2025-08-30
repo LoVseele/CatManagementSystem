@@ -2,13 +2,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgb(249, 171, 44);
+  background-color: rgb(254, 213, 48);
 }
 
 .header-title {
   color: #210808ff;
   font-weight: 600;
   font-size: 18px;
+  margin-right: 18px;
+}
+
+.header-title:hover {
+  color: #290909 !important;
+}
+
+.header-appointment {
+  color: #210808ff;
+  font-size: 16px;
+  font-weight: 600;
+  margin-right: 20px;
+}
+
+.header-appointment:hover {
+  color: rgb(254, 127, 24) !important;
 }
 
 .header-admin {

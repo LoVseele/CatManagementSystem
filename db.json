@@ -37,6 +37,90 @@
       "email": "lisi@example.com",
       "userIntro": "熟悉 Java 与数据库。",
       "progress": "二轮考核"
+    },
+    {
+      "id": "openid_003",
+      "openId": "openid_003",
+      "userName": "张",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
+    },
+    {
+      "id": "openid_004",
+      "openId": "openid_004",
+      "userName": "三",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
+    },
+    {
+      "id": "openid_005",
+      "openId": "openid_005",
+      "userName": "射手",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
+    },
+    {
+      "id": "openid_006",
+      "openId": "openid_006",
+      "userName": "书",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
+    },
+    {
+      "id": "openid_007",
+      "openId": "openid_007",
+      "userName": "爷",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
+    },
+    {
+      "id": "openid_008",
+      "openId": "openid_008",
+      "userName": "dasd",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
+    },
+    {
+      "id": "openid_009",
+      "openId": "openid_009",
+      "userName": "jdoia",
+      "userNumber": 20230001,
+      "academy": "计算机学院·软件工程·2301",
+      "direction": "前端",
+      "phoneNumber": "13800000001",
+      "email": "zhangsan@example.com",
+      "userIntro": "热爱前端，熟悉 React/TS。",
+      "progress": "一轮考核"
     }
   ],
   "scores": [
@@ -55,6 +139,34 @@
       "score": 78,
       "comment": "需要加强项目经验",
       "adminName": "超级管理员"
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "openId": "openid_001",
+      "interviewDate": "2025-09-01",
+      "interviewTime": "09:00-10:00",
+      "direction": "前端",
+      "type": "一轮考核"
+    }
+  ],
+  "appointmentSlots": [
+    {
+      "id": 1,
+      "interviewDate": "2025-09-01",
+      "interviewTime": "09:00-10:00",
+      "interviewNumber": 5,
+      "interviewCurrentNumber": 1,
+      "direction": "前端"
+    },
+    {
+      "id": 2,
+      "interviewDate": "2025-09-01",
+      "interviewTime": "10:00-11:00",
+      "interviewNumber": 3,
+      "interviewCurrentNumber": 0,
+      "direction": "前端"
     }
   ]
 }
