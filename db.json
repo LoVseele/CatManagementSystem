@@ -146,7 +146,8 @@
       "id": 1,
       "openId": "openid_001",
       "interviewDate": "2025-09-01",
-      "interviewTime": "09:00-10:00",
+      "interviewStartTime": "09:00",
+      "interviewEndTime": "10:00",
       "direction": "前端",
       "type": "一轮考核"
     }
@@ -155,7 +156,8 @@
     {
       "id": 1,
       "interviewDate": "2025-09-01",
-      "interviewTime": "09:00-10:00",
+      "interviewStartTime": "09:00",
+      "interviewEndTime": "10:00",
       "interviewNumber": 6,
       "interviewCurrentNumber": 1,
       "direction": "前端"
@@ -163,10 +165,20 @@
     {
       "id": 2,
       "interviewDate": "2025-09-01",
-      "interviewTime": "10:00-11:00",
+      "interviewStartTime": "10:00",
+      "interviewEndTime": "11:00",
       "interviewNumber": 3,
       "interviewCurrentNumber": 0,
       "direction": "前端"
+    },
+    {
+      "interviewDate": "2025-09-01",
+      "interviewStartTime": "20:00",
+      "interviewEndTime": "10:00",
+      "direction": "后端",
+      "interviewNumber": 5,
+      "interviewCurrentNumber": 0,
+      "id": 3
     }
   ]
 }

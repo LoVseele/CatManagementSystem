@@ -20,37 +20,6 @@ export const fetchAppointments = createAsyncThunk(
   }
 );
 
-// 新增预约：同时尝试把相应 slot 的 interviewCurrentNumber +1
-export const addAppointment = createAsyncThunk(
-  'appointments/add',
-  async (payload: Appointment, { rejectWithValue }) => {
-    try {
-      // 1) 创建预约记录
-      const res = await api.post<Appointment>('/appointments', payload);
-
-      // 2) 查找对应 slot（date/time/direction）
-      const slotRes = await api.get<any[]>(
-        `/appointmentSlots?interviewDate=${
-          payload.interviewDate
-        }&interviewTime=${encodeURIComponent(
-          payload.interviewTime
-        )}&direction=${encodeURIComponent(payload.direction)}`
-      );
-      const slot = slotRes.data[0];
-      if (slot) {
-        // 尝试 +1（后端是 json-server -> put/patch）
-        const newCurrent = (slot.interviewCurrentNumber || 0) + 1;
-        await api.patch(`/appointmentSlots/${slot.id}`, {
-          interviewCurrentNumber: newCurrent,
-        });
-      }
-      return res.data;
-    } catch (err: any) {
-      return rejectWithValue(err.message || '添加失败');
-    }
-  }
-);
-
 // 删除预约：同时尝试把对应 slot 的 interviewCurrentNumber -1（不低于0）
 export const deleteAppointment = createAsyncThunk(
   'appointments/delete',
@@ -65,8 +34,10 @@ export const deleteAppointment = createAsyncThunk(
       const slotRes = await api.get<any[]>(
         `/appointmentSlots?interviewDate=${
           ap.interviewDate
-        }&interviewTime=${encodeURIComponent(
-          ap.interviewTime
+        }&interviewStartTime=${encodeURIComponent(
+          ap.interviewStartTime
+        )}&interviewEndTime=${encodeURIComponent(
+          ap.interviewEndTime
         )}&direction=${encodeURIComponent(ap.direction)}`
       );
       const slot = slotRes.data[0];
@@ -104,9 +75,6 @@ const slice = createSlice({
         s.error = a.error.message || '加载失败';
       })
 
-      .addCase(addAppointment.fulfilled, (s, a: PayloadAction<Appointment>) => {
-        s.list.push(a.payload);
-      })
       .addCase(deleteAppointment.fulfilled, (s, a: PayloadAction<number>) => {
         s.list = s.list.filter((x) => x.id !== a.payload);
       });

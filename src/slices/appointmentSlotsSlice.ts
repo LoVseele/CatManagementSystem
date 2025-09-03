@@ -11,11 +11,13 @@ interface State {
 
 const initialState: State = { list: [], loading: false, error: null };
 
+//获取预约时间段信息
 export const fetchSlots = createAsyncThunk('slots/fetch', async () => {
   const res = await api.get<AppointmentSlot[]>('/appointmentSlots');
   return res.data;
 });
 
+//添加新的预约时间段
 export const addSlot = createAsyncThunk(
   'slots/add',
   async (payload: AppointmentSlot) => {
@@ -24,6 +26,7 @@ export const addSlot = createAsyncThunk(
   }
 );
 
+//更改预约时间段
 export const updateSlot = createAsyncThunk(
   'slots/update',
   async (payload: AppointmentSlot) => {
@@ -36,6 +39,7 @@ export const updateSlot = createAsyncThunk(
   }
 );
 
+//删除预约时间段
 export const deleteSlot = createAsyncThunk(
   'slots/delete',
   async (id: number) => {

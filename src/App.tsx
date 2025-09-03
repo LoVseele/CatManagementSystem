@@ -11,7 +11,7 @@ import Login from './pages/Login';
 import UsersList from './pages/UsersList';
 import UserDetail from './pages/UserDetail';
 import AppointmentsList from './pages/appointmentList';
-import AppointmentSlots from './pages/appointmentSlots';
+
 import ProtectedRoute from './components/ProtectedRoute';
 import { useAppSelector, useAppDispatch } from './hooks';
 import { logout } from './slices/authSlice';
@@ -88,14 +88,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/appointment-slots"
-              element={
-                <ProtectedRoute>
-                  <AppointmentSlots />
-                </ProtectedRoute>
-              }
-            />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Content>
