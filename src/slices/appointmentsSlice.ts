@@ -1,6 +1,6 @@
 // src/slices/appointmentsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import api from '../services/api';
+import api from '../services/request';
 import type { Appointment } from '../types';
 
 interface State {

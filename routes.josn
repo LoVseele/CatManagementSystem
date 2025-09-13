@@ -1,8 +1,0 @@
-{
-  "/api/admin/login": "/admins",
-  "/api/admin/applyList": "/users",
-  "/api/admin/getDataById": "/users",
-  "/api/admin/apply/score": "/scores",
-  "/api/admin/getAppointmentsTime": "/appointmentSlots",
-  "/api/admin/addAppointmentTime": "/appointmentSlots"
-}
