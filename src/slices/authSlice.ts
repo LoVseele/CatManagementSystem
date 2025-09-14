@@ -1,5 +1,8 @@
+// lovseele/catmanagementsystem/CatManagementSystem-feat/src/slices/authSlice.ts
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../services/request';
+import { adminLoginAPI } from '../services';
+import type { AdminLoginRequest, LoginResponseData } from '../types';
 
 interface AuthState {
   token: string | null;
@@ -15,21 +18,26 @@ const initialState: AuthState = {
   error: null,
 };
 
-export const login = createAsyncThunk(
+// 我们承诺，如果 thunk 成功，将返回 LoginResponseData 类型的数据
+export const login = createAsyncThunk<LoginResponseData, AdminLoginRequest>(
   'auth/login',
-  async (
-    { username, password }: { username: string; password: string },
-    { rejectWithValue }
-  ) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const res = await api.get('/admins', { params: { username, password } });
-      if (!res.data || res.data.length === 0) {
-        return rejectWithValue('用户名或密码错误');
+      // 1. 调用 API。因为拦截器已生效，这里直接得到 { code, message, data }
+      const apiResponse = await adminLoginAPI(params);
+
+      // 2. 检查业务 code 是否成功
+      if (apiResponse.code !== 200) {
+        // 请根据后端实际的成功 code 调整
+        throw new Error(apiResponse.message || '登录验证失败');
       }
-      const admin = res.data[0];
-      return { token: 'mock-token', adminName: admin.name };
-    } catch (e: any) {
-      return rejectWithValue(e.message || '登录失败');
+
+      // 3. 直接返回核心的 data 数据，它就是 LoginResponseData 类型
+      return apiResponse.data;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || err.message || '登录请求失败';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -46,21 +54,27 @@ const authSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(login.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    });
-    builder.addCase(login.fulfilled, (state, action) => {
-      state.loading = false;
-      state.token = action.payload.token;
-      state.adminName = action.payload.adminName;
-      localStorage.setItem('token', action.payload.token);
-      localStorage.setItem('adminName', action.payload.adminName);
-    });
-    builder.addCase(login.rejected, (state, action) => {
-      state.loading = false;
-      state.error = (action.payload as string) || '登录失败';
-    });
+    builder
+      .addCase(login.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        // action.payload 就是上面 thunk 返回的 LoginResponseData 对象
+        const { token, user } = action.payload;
+
+        state.loading = false;
+        state.token = token;
+        state.adminName = user.username; // 从 user 对象中获取 username
+
+        // 将 token 和 adminName 存入 localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('adminName', user.username);
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || '登录发生未知错误';
+      });
   },
 });
 

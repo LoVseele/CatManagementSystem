@@ -1,34 +1,41 @@
 // lovseele/catmanagementsystem/CatManagementSystem-feat/src/types.ts
 
-// 用户信息类型
-export interface User {
-  userId: string;
-  openId: string;
-  code: string;
-  name: string;
-  userNumber: string;
-  academy: string;
-  phoneNumber: string;
-  email: string;
-  userIntro: string;
-  direction: string;
-  state: string;
-  username: string;
-  token: string;
+// 统一的 API 响应体类型
+export interface ApiResponse<T> {
+  code: number;
+  message: string;
+  data: T;
 }
 
-// 用户预约信息类型
+// 用户信息类型 (根据后端真实数据修正)
+export interface User {
+  userId: number;
+  openId: string | null;
+  code: string | null;
+  name: string | null; // 普通用户的真实姓名
+  userNumber: string | null;
+  academy: string | null;
+  phoneNumber: string | null;
+  email: string | null;
+  userIntro: string | null;
+  direction: string | null;
+  state: string | null;
+  role: string; // 'admin' 或 'user'
+  username: string; // 管理员的登录名/显示名
+}
+
+// 预约信息类型 (基于旧 db.json，待后端提供接口后可能需要调整)
 export interface Appointment {
   id?: number;
   openId: string;
   interviewDate: string; // yyyy-MM-dd
   interviewStartTime: string;
   interviewEndTime: string;
-  direction: string; // "前端" | "后端"
-  type?: string; // 可选： "面试" | "一轮考核" | "二轮考核"
+  direction: string;
+  type?: string;
 }
 
-// 预约时间段类型
+// 预约时间段类型 (与后端 /api/admin/appointmentTimeList 接口匹配)
 export interface AppointmentSlot {
   id?: number;
   interviewDate: string;
@@ -39,25 +46,25 @@ export interface AppointmentSlot {
   direction: string;
 }
 
-// 评分信息类型
+// 评分信息类型 (基于旧 db.json，待后端提供接口后可能需要调整)
 export interface Score {
   id?: number;
-  userId: string; // 对应 User 的 openId
+  userId: string;
   round: string;
   score: number;
   comment?: string;
   adminName: string;
 }
 
-// 管理员登录请求体类型
+// 管理员登录请求体类型 (修正为 username)
 export interface AdminLoginRequest {
   userName: string;
   password?: string;
 }
 
-// 统一的 API 响应体类型
-export interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
+// 【新增】管理员登录成功后，ApiResponse.data 的类型
+export interface LoginResponseData {
+  user: User;
+  token: string;
+  refreshToken: string;
 }

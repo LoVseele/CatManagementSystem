@@ -1,28 +1,29 @@
-import api from './request';
+import api from './api'; // 导入配置好的 axios 实例
 import type {
   User,
   AppointmentSlot,
   AdminLoginRequest,
+  LoginResponseData,
   ApiResponse,
-} from '../types'; //
+} from '../types';
 
 /*
  * @name 管理员登录
- * @description 对应接口文档 "管理员登录"
- * @param data {AdminLoginRequest} 包含 username 和 password
+ * @description 对应接口文档 "管理员登录"。
+ * @param data {AdminLoginRequest} 包含 userName 和 password 的请求体。
+ * @returns {Promise<ApiResponse<User>>} 返回一个包含 User 对象的响应，User 对象内部含有 token。
  */
+
 export const adminLoginAPI = (data: AdminLoginRequest) => {
-  // 注意: 接口文档将参数定义在 requestBody 中，因此作为 post/get 的 data 发送
-  return api.get<ApiResponse<{ user: User; token: string }>>(
-    '/api/admin/login',
-    { data }
-  );
+  // 【正确类型标注】我们期望返回的 data 是 LoginResponseData 类型
+  return api.post<ApiResponse<LoginResponseData>>('/api/admin/login', data);
 };
 
 /*
  * @name 管理员获取报名列表
- * @description 对应接口文档 "管理员获取报名列表"
- * @param params {{ pageSize?: number; pageNum?: number }} 分页参数
+ * @description 对应接口文档 "管理员获取报名列表"。
+ * @param params {{ pageSize?: number; pageNum?: number }} 分页参数。
+ * @returns {Promise<ApiResponse<User[]>>}
  */
 export const getApplyListAPI = (params: {
   pageSize?: number;
@@ -33,23 +34,25 @@ export const getApplyListAPI = (params: {
 
 /*
  * @name 管理员提交评分
- * @description 对应接口文档 "管理员提交评分"
+ * @description 对应接口文档 "管理员提交评分"。
  * @param params {{ accessId: number; score: number; comment: string }}
+ * @returns {Promise<ApiResponse<string>>}
  */
 export const submitScoreAPI = (params: {
   accessId: number;
   score: number;
   comment: string;
 }) => {
-  return api.post<ApiResponse<object>>('/api/admin/apply/score', null, {
+  return api.post<ApiResponse<string>>('/api/admin/apply/score', null, {
     params,
   });
 };
 
 /*
  * @name 新增预约时间
- * @description 对应接口文档 "新增预约时间"
- * @param params 包含预约时间的详细信息
+ * @description 对应接口文档 "新增预约时间"。
+ * @param params 包含预约时间的详细信息。
+ * @returns {Promise<ApiResponse<string>>}
  */
 export const addAppointmentTimeAPI = (params: {
   accessType: string;
@@ -59,45 +62,40 @@ export const addAppointmentTimeAPI = (params: {
   startTime: string; // HH:mm
   endTime: string; // HH:mm
 }) => {
-  return api.post<ApiResponse<object>>('/api/admin/addAppointmentTime', null, {
+  return api.post<ApiResponse<string>>('/api/admin/addAppointmentTime', null, {
     params,
   });
 };
 
 /*
- * @name 按用户id获取用户信息
- * @description 对应接口文档 "按用户id获取用户信息"
- * @param params {{ openId: string }}
+ * @name 获取用户信息
+ * @description 对应接口文档 "获取用户信息"。
+ * @param params {{ userId: number }}
+ * @returns {Promise<ApiResponse<User>>}
  */
-export const getUserDataByIdAPI = (params: { openId: string }) => {
-  return api.get<ApiResponse<User>>('/api/admin/getDataById', { params });
+export const getUserInfoAPI = (params: { userId: number }) => {
+  return api.get<ApiResponse<User>>('/api/admin/getUserInfo', { params });
 };
 
 /*
- * @name 获取预约时间
- * @description 对应接口文档 "获取预约时间" (管理员视角)
+ * @name 获取预约时间列表
+ * @description 对应接口文档 "获取预约时间"。
+ * @returns {Promise<ApiResponse<AppointmentSlot[]>>}
  */
-export const getAdminAppointmentsTimeAPI = () => {
+export const getAppointmentTimeListAPI = () => {
   return api.get<ApiResponse<AppointmentSlot[]>>(
-    '/api/admin/getAppointmentsTime'
+    '/api/admin/appointmentTimeList'
   );
 };
 
 /*
  * @name 设置招新状态
- * @description 对应接口文档 "设置招新状态"
+ * @description 对应接口文档 "设置招新状态"。
  * @param params {{ status: string }}
+ * @returns {Promise<ApiResponse<string>>}
  */
 export const setRecruitStatusAPI = (params: { status: string }) => {
-  return api.post<ApiResponse<object>>('/api/admin/setRecruitStatus', null, {
+  return api.post<ApiResponse<string>>('/api/admin/setRecruitStatus', null, {
     params,
   });
-};
-
-/*
- * @name 用户预约时间获取
- * @description 对应接口文档 "用户预约时间获取" (管理员视角)
- */
-export const getUserAppointmentTimeAPI = () => {
-  return api.get<ApiResponse<any>>('/api/admin/getUserAppointmentTime');
 };
