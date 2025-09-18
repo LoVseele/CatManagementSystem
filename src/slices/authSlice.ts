@@ -2,7 +2,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { adminLoginAPI } from '../services';
-import type { AdminLoginRequest, LoginResponseData } from '../types';
+import type { AdminLoginParams, LoginPayload } from '../types';
 
 interface AuthState {
   token: string | null;
@@ -18,22 +18,21 @@ const initialState: AuthState = {
   error: null,
 };
 
-// 我们承诺，如果 thunk 成功，将返回 LoginResponseData 类型的数据
-export const login = createAsyncThunk<LoginResponseData, AdminLoginRequest>(
+export const login = createAsyncThunk<LoginPayload, AdminLoginParams>(
   'auth/login',
-  async (params, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
-      // 1. 调用 API。因为拦截器已生效，这里直接得到 { code, message, data }
-      const apiResponse = await adminLoginAPI(params);
+      const apiResponse = await adminLoginAPI(credentials);
+      const response = apiResponse.data;
 
-      // 2. 检查业务 code 是否成功
-      if (apiResponse.code !== 200) {
-        // 请根据后端实际的成功 code 调整
-        throw new Error(apiResponse.message || '登录验证失败');
+      if (response.code !== 200) {
+        throw new Error(response.message || '登录验证失败');
       }
 
-      // 3. 直接返回核心的 data 数据，它就是 LoginResponseData 类型
-      return apiResponse.data;
+      return {
+        token: response.data.token,
+        adminName: response.data.user.username,
+      };
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '登录请求失败';
@@ -60,16 +59,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        // action.payload 就是上面 thunk 返回的 LoginResponseData 对象
-        const { token, user } = action.payload;
-
         state.loading = false;
-        state.token = token;
-        state.adminName = user.username; // 从 user 对象中获取 username
-
-        // 将 token 和 adminName 存入 localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('adminName', user.username);
+        state.token = action.payload.token;
+        state.adminName = action.payload.adminName;
+        localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('adminName', action.payload.adminName);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;

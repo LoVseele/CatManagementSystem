@@ -1,84 +1,61 @@
-// src/slices/appointmentsSlice.ts
+// lovseele/catmanagementsystem/CatManagementSystem-feat/src/slices/appointmentsSlice.ts
+
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import api from '../services/api';
-import type { Appointment } from '../types';
+import { getUsersByAppointmentTimeAPI } from '../services';
+import type { User } from '../types';
 
 interface State {
-  list: Appointment[];
+  list: User[];
   loading: boolean;
   error: string | null;
 }
 
 const initialState: State = { list: [], loading: false, error: null };
 
-// 获取所有预约
-export const fetchAppointments = createAsyncThunk(
-  'appointments/fetch',
-  async () => {
-    const res = await api.get<Appointment[]>('/appointments');
-    return res.data;
-  }
-);
-
-// 删除预约：同时尝试把对应 slot 的 interviewCurrentNumber -1（不低于0）
-export const deleteAppointment = createAsyncThunk(
-  'appointments/delete',
-  async (id: number, { rejectWithValue }) => {
+// 获取当前时间段的预约用户
+export const fetchAppointmentsBySlot = createAsyncThunk<User[], number>(
+  'appointments/fetchBySlot',
+  async (appointmentSlotId, { rejectWithValue }) => {
     try {
-      // 1) 先获取预约记录，确定 slot 信息
-      const aRes = await api.get<any>(`/appointments/${id}`);
-      const ap = aRes.data;
-      await api.delete(`/appointments/${id}`);
-
-      // 2) 找到对应 slot 并 -1
-      const slotRes = await api.get<any[]>(
-        `/appointmentSlots?interviewDate=${
-          ap.interviewDate
-        }&interviewStartTime=${encodeURIComponent(
-          ap.interviewStartTime
-        )}&interviewEndTime=${encodeURIComponent(
-          ap.interviewEndTime
-        )}&direction=${encodeURIComponent(ap.direction)}`
-      );
-      const slot = slotRes.data[0];
-      if (slot) {
-        const newCurrent = Math.max(0, (slot.interviewCurrentNumber || 0) - 1);
-        await api.patch(`/appointmentSlots/${slot.id}`, {
-          interviewCurrentNumber: newCurrent,
-        });
-      }
-      return id;
+      const apiResponse = await getUsersByAppointmentTimeAPI({
+        appointmentSlotId,
+      });
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '获取预约用户列表失败');
+      return response.data || [];
     } catch (err: any) {
-      return rejectWithValue(err.message || '删除失败');
+      return rejectWithValue(err.response?.data?.message || err.message);
     }
   }
 );
 
-const slice = createSlice({
+const appointmentsSlice = createSlice({
   name: 'appointments',
   initialState,
-  reducers: {},
+  reducers: {
+    clearAppointments: (state) => {
+      state.list = [];
+    },
+  },
   extraReducers: (b) => {
-    b.addCase(fetchAppointments.pending, (s) => {
+    b.addCase(fetchAppointmentsBySlot.pending, (s) => {
       s.loading = true;
       s.error = null;
     })
       .addCase(
-        fetchAppointments.fulfilled,
-        (s, a: PayloadAction<Appointment[]>) => {
+        fetchAppointmentsBySlot.fulfilled,
+        (s, a: PayloadAction<User[]>) => {
           s.loading = false;
           s.list = a.payload;
         }
       )
-      .addCase(fetchAppointments.rejected, (s, a) => {
+      .addCase(fetchAppointmentsBySlot.rejected, (s, a) => {
         s.loading = false;
-        s.error = a.error.message || '加载失败';
-      })
-
-      .addCase(deleteAppointment.fulfilled, (s, a: PayloadAction<number>) => {
-        s.list = s.list.filter((x) => x.id !== a.payload);
+        s.error = (a.payload as string) || '加载失败';
       });
   },
 });
 
-export default slice.reducer;
+export const { clearAppointments } = appointmentsSlice.actions;
+export default appointmentsSlice.reducer;

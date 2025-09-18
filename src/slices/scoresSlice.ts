@@ -1,14 +1,8 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import api from '../services/api';
+// lovseele/catmanagementsystem/CatManagementSystem-feat/src/slices/scoresSlice.ts
 
-export interface Score {
-  id?: number;
-  userId: string; // equals user's id (openId)
-  round: string;
-  score: number;
-  comment?: string;
-  adminName: string;
-}
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { submitScoreAPI, getScoresByUserIdAPI } from '../services';
+import type { Score, SubmitScoreParams } from '../types';
 
 interface ScoresState {
   items: Score[];
@@ -22,35 +16,35 @@ const initialState: ScoresState = {
   error: null,
 };
 
-export const fetchScoresByUser = createAsyncThunk<Score[], string>(
+//获取用户评分
+export const fetchScoresByUser = createAsyncThunk<Score[], number>(
   'scores/fetchByUser',
-  async (userId) => {
-    const res = await api.get<Score[]>(`/scores?userId=${userId}`);
-    return res.data;
+  async (userId, { rejectWithValue }) => {
+    try {
+      const apiResponse = await getScoresByUserIdAPI({ userId });
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '获取评分列表失败');
+      return response.data || [];
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
   }
 );
 
-export const addScore = createAsyncThunk<Score, Score>(
+// 添加用户评分
+export const addScore = createAsyncThunk(
   'scores/add',
-  async (newScore) => {
-    const res = await api.post<Score>('/scores', newScore);
-    return res.data;
-  }
-);
-
-export const editScore = createAsyncThunk<Score, Score>(
-  'scores/edit',
-  async (score) => {
-    const res = await api.patch<Score>(`/scores/${score.id}`, score);
-    return res.data;
-  }
-);
-
-export const deleteScore = createAsyncThunk<number, number>(
-  'scores/delete',
-  async (id) => {
-    await api.delete(`/scores/${id}`);
-    return id;
+  async (params: SubmitScoreParams, { rejectWithValue }) => {
+    try {
+      const apiResponse = await submitScoreAPI(params);
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '添加评分失败');
+      return;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
   }
 );
 
@@ -59,11 +53,17 @@ const scoresSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
+    const handlePending = (state: ScoresState) => {
+      state.loading = true;
+      state.error = null;
+    };
+    const handleRejected = (state: ScoresState, action: any) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    };
+
     builder
-      .addCase(fetchScoresByUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      .addCase(fetchScoresByUser.pending, handlePending)
       .addCase(
         fetchScoresByUser.fulfilled,
         (state, action: PayloadAction<Score[]>) => {
@@ -71,23 +71,12 @@ const scoresSlice = createSlice({
           state.items = action.payload;
         }
       )
-      .addCase(fetchScoresByUser.rejected, (state, action) => {
+      .addCase(fetchScoresByUser.rejected, handleRejected)
+      .addCase(addScore.pending, handlePending)
+      .addCase(addScore.fulfilled, (state) => {
         state.loading = false;
-        state.error = action.error.message || '加载评分失败';
       })
-      .addCase(addScore.fulfilled, (state, action: PayloadAction<Score>) => {
-        state.items.push(action.payload);
-      })
-      .addCase(editScore.fulfilled, (state, action: PayloadAction<Score>) => {
-        const idx = state.items.findIndex((s) => s.id === action.payload.id);
-        if (idx !== -1) state.items[idx] = action.payload;
-      })
-      .addCase(
-        deleteScore.fulfilled,
-        (state, action: PayloadAction<number>) => {
-          state.items = state.items.filter((s) => s.id !== action.payload);
-        }
-      );
+      .addCase(addScore.rejected, handleRejected);
   },
 });
 

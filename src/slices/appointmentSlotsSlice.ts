@@ -1,6 +1,12 @@
-// src/slices/appointmentSlotsSlice.ts
+// lovseele/catmanagementsystem/CatManagementSystem-feat/src/slices/appointmentSlotsSlice.ts
+
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import api from '../services/api';
+import {
+  getAppointmentTimeListAPI,
+  addAppointmentTimeAPI,
+  updateAppointmentSlotAPI,
+  deleteAppointmentSlotAPI,
+} from '../services';
 import type { AppointmentSlot } from '../types';
 
 interface State {
@@ -9,77 +15,126 @@ interface State {
   error: string | null;
 }
 
-const initialState: State = { list: [], loading: false, error: null };
+const initialState: State = {
+  list: [],
+  loading: false,
+  error: null,
+};
 
-//获取预约时间段信息
-export const fetchSlots = createAsyncThunk('slots/fetch', async () => {
-  const res = await api.get<AppointmentSlot[]>('/appointmentSlots');
-  return res.data;
-});
+// 获取时间段列表
+export const fetchSlots = createAsyncThunk<AppointmentSlot[]>(
+  'appointmentSlots/fetch',
+  async (_, { rejectWithValue }) => {
+    try {
+      const apiResponse = await getAppointmentTimeListAPI();
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '获取时间段列表失败');
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
 
-//添加新的预约时间段
+// 添加新的预约时间段
 export const addSlot = createAsyncThunk(
-  'slots/add',
-  async (payload: AppointmentSlot) => {
-    const res = await api.post<AppointmentSlot>('/appointmentSlots', payload);
-    return res.data;
+  'appointmentSlots/add',
+  async (
+    params: Omit<AppointmentSlot, 'id' | 'appointedCount'>,
+    { rejectWithValue }
+  ) => {
+    try {
+      const apiResponse = await addAppointmentTimeAPI(params);
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '新增时间段失败');
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
   }
 );
 
-//更改预约时间段
-export const updateSlot = createAsyncThunk(
-  'slots/update',
-  async (payload: AppointmentSlot) => {
-    if (!payload.id) throw new Error('slot id required');
-    const res = await api.put<AppointmentSlot>(
-      `/appointmentSlots/${payload.id}`,
-      payload
-    );
-    return res.data;
+// 更改预约时间段
+export const updateSlot = createAsyncThunk<AppointmentSlot, AppointmentSlot>(
+  'appointmentSlots/update',
+  async (payload, { rejectWithValue }) => {
+    try {
+      const apiResponse = await updateAppointmentSlotAPI(payload);
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '更新时间段失败');
+      return response.data;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
   }
 );
 
-//删除预约时间段
-export const deleteSlot = createAsyncThunk(
-  'slots/delete',
-  async (id: number) => {
-    await api.delete(`/appointmentSlots/${id}`);
-    return id;
+// 删除预约时间段
+export const deleteSlot = createAsyncThunk<number, number>(
+  'appointmentSlots/delete',
+  async (appointmentSlotId, { rejectWithValue }) => {
+    try {
+      const apiResponse = await deleteAppointmentSlotAPI({ appointmentSlotId });
+      const response = apiResponse.data;
+      if (response.code !== 200)
+        throw new Error(response.message || '删除时间段失败');
+      return appointmentSlotId;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
   }
 );
 
-const slice = createSlice({
+const appointmentSlotsSlice = createSlice({
   name: 'appointmentSlots',
   initialState,
   reducers: {},
-  extraReducers: (b) => {
-    b.addCase(fetchSlots.pending, (s) => {
-      s.loading = true;
-      s.error = null;
-    })
+  extraReducers: (builder) => {
+    const handlePending = (state: State) => {
+      state.loading = true;
+      state.error = null;
+    };
+    const handleRejected = (state: State, action: any) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    };
+
+    builder
+      .addCase(fetchSlots.pending, handlePending)
       .addCase(
         fetchSlots.fulfilled,
-        (s, a: PayloadAction<AppointmentSlot[]>) => {
-          s.loading = false;
-          s.list = a.payload;
+        (state, action: PayloadAction<AppointmentSlot[]>) => {
+          state.loading = false;
+          state.list = action.payload;
         }
       )
-      .addCase(fetchSlots.rejected, (s, a) => {
-        s.loading = false;
-        s.error = a.error.message || '加载失败';
+      .addCase(fetchSlots.rejected, handleRejected)
+      .addCase(addSlot.pending, handlePending)
+      .addCase(addSlot.fulfilled, (state) => {
+        state.loading = false;
       })
-
-      .addCase(addSlot.fulfilled, (s, a: PayloadAction<AppointmentSlot>) => {
-        s.list.push(a.payload);
+      .addCase(addSlot.rejected, handleRejected)
+      .addCase(updateSlot.pending, handlePending)
+      .addCase(
+        updateSlot.fulfilled,
+        (state, action: PayloadAction<AppointmentSlot>) => {
+          state.loading = false;
+          const index = state.list.findIndex(
+            (slot) => slot.id === action.payload.id
+          );
+          if (index !== -1) state.list[index] = action.payload;
+        }
+      )
+      .addCase(updateSlot.rejected, handleRejected)
+      .addCase(deleteSlot.pending, handlePending)
+      .addCase(deleteSlot.fulfilled, (state, action: PayloadAction<number>) => {
+        state.loading = false;
+        state.list = state.list.filter((slot) => slot.id !== action.payload);
       })
-      .addCase(updateSlot.fulfilled, (s, a: PayloadAction<AppointmentSlot>) => {
-        const idx = s.list.findIndex((x) => x.id === a.payload.id);
-        if (idx !== -1) s.list[idx] = a.payload;
-      })
-      .addCase(deleteSlot.fulfilled, (s, a: PayloadAction<number>) => {
-        s.list = s.list.filter((x) => x.id !== a.payload);
-      });
+      .addCase(deleteSlot.rejected, handleRejected);
   },
 });
 
-export default slice.reducer;
+export default appointmentSlotsSlice.reducer;

@@ -12,7 +12,7 @@ export interface User {
   userId: number;
   openId: string | null;
   code: string | null;
-  name: string | null; // 普通用户的真实姓名
+  name: string | null;
   userNumber: string | null;
   academy: string | null;
   phoneNumber: string | null;
@@ -20,33 +20,40 @@ export interface User {
   userIntro: string | null;
   direction: string | null;
   state: string | null;
-  role: string; // 'admin' 或 'user'
-  username: string; // 管理员的登录名/显示名
+  role: string;
+  username: string;
 }
 
-// 预约信息类型 (基于旧 db.json，待后端提供接口后可能需要调整)
+// 预约信息类型
 export interface Appointment {
   id?: number;
   openId: string;
-  interviewDate: string; // yyyy-MM-dd
+  interviewDate: string;
   interviewStartTime: string;
   interviewEndTime: string;
   direction: string;
   type?: string;
 }
 
-// 预约时间段类型 (与后端 /api/admin/appointmentTimeList 接口匹配)
+// 预约时间段类型 (
 export interface AppointmentSlot {
   id?: number;
   interviewDate: string;
   interviewStartTime: string;
   interviewEndTime: string;
-  interviewNumber: number; // 预约人数上限
-  interviewCurrentNumber: number; // 当前预约人数
+  interviewNumber: number;
+  interviewCurrentNumber: number;
   direction: string;
 }
 
-// 评分信息类型 (基于旧 db.json，待后端提供接口后可能需要调整)
+//提交用户分数请求体类型
+export interface SubmitScoreParams {
+  accessId: number;
+  score: number;
+  comment: string;
+}
+
+// 评分信息类型
 export interface Score {
   id?: number;
   userId: string;
@@ -56,15 +63,28 @@ export interface Score {
   adminName: string;
 }
 
-// 管理员登录请求体类型 (修正为 username)
-export interface AdminLoginRequest {
+// 管理员登录请求体类型
+export interface AdminLoginParams {
   userName: string;
   password?: string;
 }
 
-// 【新增】管理员登录成功后，ApiResponse.data 的类型
-export interface LoginResponseData {
-  user: User;
+// 定义 thunk 成功后返回的数据结构
+export interface LoginPayload {
   token: string;
-  refreshToken: string;
+  adminName: string;
+}
+
+// 获取用户列表的 thunk
+export interface FetchUsersPayload {
+  list: User[];
+  total: number;
+}
+
+//获取用户列表请求体类型
+export interface FetchUsersParams {
+  pageNum: number;
+  pageSize: number;
+  status?: string;
+  direction?: string;
 }
