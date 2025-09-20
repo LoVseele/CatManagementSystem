@@ -13,48 +13,89 @@ import {
   ConfigProvider,
 } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { fetchUsers } from '../slices/usersSlice'; // 导入重构后的 fetchUsers
+import { fetchUsers } from '../slices/usersSlice';
 import { useNavigate } from 'react-router-dom';
-import type { User } from '../types'; // 导入 User 类型
+import type { User } from '../types';
 
-const PAGE_SIZE = 6; // 定义每页大小
+// 单页能展示的最大数据量
+const PAGE_SIZE = 6;
+
+// 状态定义
+export const statusOptions = [
+  { value: '', label: '全部进度' },
+  { value: '未报名', label: '未报名' },
+  { value: '已报名', label: '已报名' },
+  { value: '已淘汰', label: '已淘汰' },
+  { value: '初面', label: '初面' },
+  { value: '初面通过', label: '初面通过' },
+  { value: '一面', label: '一面' },
+  { value: '一轮考核通过', label: '一轮考核通过' },
+  { value: '二面', label: '二面' },
+  { value: '二轮考核通过', label: '二轮考核通过' },
+  { value: '已通过', label: '已通过' },
+];
 
 export default function UsersList() {
   const dispatch = useAppDispatch();
-  const { list, loading } = useAppSelector((s) => s.users);
+  // 从 store 中获取完整的用户列表，并重命名为 allUsers
+  const { list: allUsers, loading } = useAppSelector((s) => s.users);
   const navigate = useNavigate();
 
-  // 本地 state 用于筛选和分页
+  // 管理筛选条件与当前页码
   const [keyword, setKeyword] = useState('');
-  const [direction, setDirection] = useState<'全部' | '前端' | '后端'>('全部');
-  // 注意：User 类型中没有 progress 字段，暂时用 state 字段代替
-  const [progress, setProgress] = useState<string>('全部');
+  const [direction, setDirection] = useState<string>('');
+  const [status, setStatus] = useState<string>('');
   const [page, setPage] = useState(1);
 
-  // 当页码变化时，从后端获取对应页的数据
+  // 获取用户数据
   useEffect(() => {
-    dispatch(fetchUsers({ pageNum: page, pageSize: PAGE_SIZE }));
-  }, [dispatch, page]);
+    dispatch(
+      fetchUsers({ pageNum: 1, pageSize: 99, direction: '', status: '' })
+    );
+  }, [dispatch]);
 
-  // 前端筛选逻辑 (临时方案)
+  // 数据筛选
   const filteredData = useMemo(() => {
-    return list.filter((u: User) => {
-      // 根据后端返回的字段进行搜索
-      const searchable = `${u.name} ${u.academy} ${u.userNumber}`;
-      const matchKeyword =
-        !keyword || searchable.toLowerCase().includes(keyword.toLowerCase());
-      const matchDirection = direction === '全部' || u.direction === direction;
-      // 注意：User 类型中没有 progress 字段，暂时用 state 字段代替筛选
-      const matchProgress = progress === '全部' || (u.state || '') === progress;
-      return matchKeyword && matchDirection && matchProgress;
+    if (!Array.isArray(allUsers)) {
+      return [];
+    }
+    return allUsers.filter((u) => {
+      const matchKeyword = `${u.name || ''}${u.academy || ''}${
+        u.userNumber || ''
+      }`
+        .toLowerCase()
+        .includes(keyword.toLowerCase());
+      const matchDirection = !direction || u.direction === direction;
+      const matchStatus = !status || u.state === status;
+      return matchKeyword && matchDirection && matchStatus;
     });
-  }, [list, keyword, direction, progress]);
+  }, [allUsers, keyword, direction, status]);
 
-  // 更新 Table columns 以匹配新的 User 类型
+  //  对筛选后的结果 (filteredData) 进行前端分页
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return filteredData.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [filteredData, page]);
+
   const columns = [
-    { title: '名字', dataIndex: 'name', key: 'name' },
-    { title: '学号', dataIndex: 'userNumber', key: 'userNumber' },
-    { title: '学院/专业/班级', dataIndex: 'academy', key: 'academy' },
+    {
+      title: '名字',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text: string) => text || '-',
+    },
+    {
+      title: '学号',
+      dataIndex: 'userNumber',
+      key: 'userNumber',
+      render: (text: string) => text || '-',
+    },
+    {
+      title: '学院/专业/班级',
+      dataIndex: 'academy',
+      key: 'academy',
+      render: (text: string) => text || '-',
+    },
     {
       title: '方向',
       dataIndex: 'direction',
@@ -63,7 +104,7 @@ export default function UsersList() {
     },
     {
       title: '进度',
-      dataIndex: 'state', // 使用 state 字段展示进度
+      dataIndex: 'state',
       key: 'state',
       render: (v: string) => (v ? <Tag>{v}</Tag> : '未开始'),
     },
@@ -74,7 +115,6 @@ export default function UsersList() {
         <Space>
           <Button
             type="link"
-            // 使用 userId (number) 进行跳转
             onClick={() => navigate(`/users/${record.userId}`)}
             style={{ color: 'rgba(250, 132, 35, 1) ' }}
           >
@@ -86,69 +126,65 @@ export default function UsersList() {
   ];
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          colorPrimary: 'rgba(253, 178, 2, 1)',
-        },
-      }}
-    >
+    <ConfigProvider theme={{ token: { colorPrimary: 'rgba(253, 178, 2, 1)' } }}>
       <Card title="用户列表">
         <Space style={{ marginBottom: 16 }} wrap>
           <Input
             placeholder="搜索名字、学院、学号..."
             value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              setPage(1);
+            }}
             allowClear
             style={{ width: 240 }}
           />
           <Select
             value={direction}
             style={{ width: 160 }}
-            onChange={setDirection}
+            onChange={(value) => {
+              setDirection(value);
+              setPage(1);
+            }}
             options={[
-              { value: '全部', label: '全部方向' },
+              { value: '', label: '全部方向' },
               { value: '前端', label: '前端' },
               { value: '后端', label: '后端' },
             ]}
           />
           <Select
-            value={progress}
+            value={status}
             style={{ width: 160 }}
-            onChange={setProgress}
-            // 注意：这里的筛选项需要与后端 User 的 state 字段可能的值对应
-            options={[
-              { value: '全部', label: '全部进度' },
-              { value: '一轮考核', label: '一轮考核' },
-              { value: '二轮考核', label: '二轮考核' },
-              { value: '面试', label: '面试' },
-              { value: '未通过', label: '未通过' },
-            ]}
+            onChange={(value) => {
+              setStatus(value);
+              setPage(1);
+            }}
+            options={statusOptions}
           />
           <Button
             onClick={() => {
               setKeyword('');
-              setDirection('全部');
-              setProgress('全部');
-              setPage(1); // 重置时回到第一页
+              setDirection('');
+              setStatus('');
+              setPage(1);
             }}
           >
             重置
           </Button>
         </Space>
         <Table
-          rowKey="userId" // 使用 userId 作为 key
-          loading={loading}
+          rowKey="userId"
+          // 只有在首次加载时显示 loading
+          loading={loading && !allUsers.length}
           columns={columns as any}
-          dataSource={filteredData} // 使用前端筛选后的数据
-          pagination={false} // 禁用表格自带分页
+          dataSource={paginatedData}
+          pagination={false}
           style={{ height: '60vh' }}
         />
         <div style={{ position: 'absolute', bottom: 10, right: 10 }}>
           <Pagination
             current={page}
             pageSize={PAGE_SIZE}
-            // 注意：total 总数不准确，需要后端在 /applyList 接口中返回总条目数
             total={filteredData.length}
             onChange={(newPage) => setPage(newPage)}
           />

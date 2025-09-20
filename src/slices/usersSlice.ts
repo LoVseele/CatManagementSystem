@@ -32,7 +32,6 @@ export const fetchUsers = createAsyncThunk<FetchUsersPayload, FetchUsersParams>(
     try {
       const apiResponse = await getApplyListAPI(params);
       const response = apiResponse.data;
-
       if (response.code !== 200) {
         throw new Error(response.message || '获取用户列表失败');
       }

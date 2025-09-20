@@ -13,7 +13,6 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
-      console.log(token);
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -26,7 +25,7 @@ api.interceptors.request.use(
 // 4. 配置响应拦截器
 api.interceptors.response.use(
   (response) => {
-    return response.data; // **核心：在这里返回 response.data**
+    return response;
   },
   (error) => {
     console.error('响应拦截器错误:', error.response); // 调试日志

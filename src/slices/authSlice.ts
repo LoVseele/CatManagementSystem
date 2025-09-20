@@ -2,7 +2,7 @@
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { adminLoginAPI } from '../services';
-import type { AdminLoginParams, LoginPayload } from '../types';
+import type { AdminLoginParams, LoginResponseData } from '../types';
 
 interface AuthState {
   token: string | null;
@@ -18,21 +18,20 @@ const initialState: AuthState = {
   error: null,
 };
 
-export const login = createAsyncThunk<LoginPayload, AdminLoginParams>(
+export const login = createAsyncThunk<LoginResponseData, AdminLoginParams>(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
       const apiResponse = await adminLoginAPI(credentials);
+      console.log(apiResponse);
       const response = apiResponse.data;
-
+      console.log(response);
       if (response.code !== 200) {
+        console.log(response.code);
         throw new Error(response.message || '登录验证失败');
       }
 
-      return {
-        token: response.data.token,
-        adminName: response.data.user.username,
-      };
+      return response.data;
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '登录请求失败';
@@ -61,9 +60,9 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.token = action.payload.token;
-        state.adminName = action.payload.adminName;
+        state.adminName = action.payload.user.username;
         localStorage.setItem('token', action.payload.token);
-        localStorage.setItem('adminName', action.payload.adminName);
+        localStorage.setItem('adminName', action.payload.user.username);
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;

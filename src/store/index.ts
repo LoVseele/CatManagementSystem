@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../slices/authSlice';
 import usersReducer from '../slices/usersSlice';
-import scoresReducer from '../slices/scoresSlice';
+import assessmentReducer from '../slices/assessmentSlice';
 import slotsReducer from '../slices/appointmentSlotsSlice';
 import apptsReducer from '../slices/appointmentsSlice';
 
@@ -9,7 +9,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     users: usersReducer,
-    scores: scoresReducer,
+    assessment: assessmentReducer,
     appointmentSlots: slotsReducer,
     appointments: apptsReducer,
   },

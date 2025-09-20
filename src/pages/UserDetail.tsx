@@ -1,56 +1,93 @@
 // lovseele/catmanagementsystem/CatManagementSystem-feat/src/pages/UserDetail.tsx
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
   Descriptions,
   Tag,
   Button,
+  Select,
+  List,
+  Form,
+  InputNumber,
+  Input,
+  message,
+  Space,
   ConfigProvider,
-  // Select, // 暂时禁用
+  Divider,
+  Empty,
 } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { fetchUserById } from '../slices/usersSlice';
-// import { fetchScoresByUser, addScore, editScore, deleteScore } from '../slices/scoresSlice'; // 暂时禁用
+import { fetchUserById, updateUserStatus } from '../slices/usersSlice';
+// 1. 导入新的 assessmentSlice 的 actions
+import { fetchAssessmentsByUser, addScore } from '../slices/assessmentSlice';
+import type { Score, AssessmentInfo } from '../types';
+import { statusOptions } from './UsersList';
+
+const { Option } = Select;
 
 export default function UserDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // 从 users slice 中获取当前用户信息和加载状态
   const { current: currentUser, loading: userLoading } = useAppSelector(
     (s) => s.users
   );
+  // 2. 从 assessment state 中获取数据
+  const { assessments, loading: assessmentLoading } = useAppSelector(
+    (s) => s.assessment
+  );
 
-  // 从 auth slice 中获取认证信息，未来可能用于权限判断
-  // const auth = useAppSelector((s) => s.auth);
+  const [form] = Form.useForm();
 
   useEffect(() => {
-    // 1. 检查 URL 中是否有 id
     if (id) {
-      // 2. 将 URL 中的 id (字符串) 转换为数字
       const userId = parseInt(id, 10);
-      // 3. 确保转换成功后，派发 action 获取用户数据
       if (!isNaN(userId)) {
         dispatch(fetchUserById(userId));
+        // 3. 派发 action 获取考核信息
+        dispatch(fetchAssessmentsByUser(userId));
       }
-
-      // 4. 【已注释】暂时不获取评分信息
-      // dispatch(fetchScoresByUser(id));
     }
   }, [id, dispatch]);
 
-  // 5. 【已注释】更新用户进度的功能，因后端暂无接口而禁用
-  /*
-  const handleProgressChange = async (value: string) => {
+  const handleStatusChange = async (newStatus: string) => {
     if (!currentUser) return;
-    // ... 调用 updateUserProgress 的逻辑 ...
+    const resultAction = await dispatch(
+      updateUserStatus({ userId: currentUser.userId, status: newStatus })
+    );
+    if (updateUserStatus.fulfilled.match(resultAction)) {
+      message.success('用户状态已更新');
+    } else {
+      message.error('更新失败');
+    }
   };
-  */
 
-  // 页面加载中，显示 loading 状态
+  // 4. onFinish 现在需要知道是为哪个 accessId 提交
+  const onFinishAddScore = async (values: any, accessId: number) => {
+    if (!currentUser) return;
+    const payload = {
+      accessId: accessId,
+      score: values.score,
+      comment: values.comment || '',
+    };
+    const resultAction = await dispatch(addScore(payload));
+    if (addScore.fulfilled.match(resultAction)) {
+      message.success('评分已成功提交');
+      form.resetFields();
+      // 提交成功后重新获取该用户的考核信息以刷新
+      dispatch(fetchAssessmentsByUser(currentUser.userId));
+    } else {
+      message.error('添加评分失败');
+    }
+  };
+
+  const handleMockAction = () => {
+    message.info('此功能暂未开放，需要等待后端提供相应接口。');
+  };
+
   if (userLoading) {
     return <Card loading={true} style={{ margin: 20 }} />;
   }
@@ -60,26 +97,20 @@ export default function UserDetail() {
       <ConfigProvider
         theme={{ token: { colorPrimary: 'rgba(253, 178, 2, 1)' } }}
       >
+        {/* 用户基本信息卡片 */}
         <Card
           title="用户详情"
           extra={<Button onClick={() => navigate(-1)}>返回</Button>}
         >
           {currentUser ? (
             <Descriptions bordered column={1}>
-              {/* 6. 使用从 store 获取的 currentUser 数据，并匹配正确的字段名 */}
               <Descriptions.Item label="姓名">
                 {currentUser.name || '-'}
-              </Descriptions.Item>
-              <Descriptions.Item label="User ID">
-                {currentUser.userId}
-              </Descriptions.Item>
-              <Descriptions.Item label="Open ID">
-                {currentUser.openId || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="学号">
                 {currentUser.userNumber || '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="学院专业班级">
+              <Descriptions.Item label="学院/专业/班级">
                 {currentUser.academy || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="学习方向">
@@ -90,44 +121,114 @@ export default function UserDetail() {
                 )}
               </Descriptions.Item>
               <Descriptions.Item label="进度">
-                <Tag>{currentUser.state || '未开始'}</Tag>
-                {/* 【功能禁用】因后端无接口，禁用此下拉框 */}
-                {/* <Select defaultValue={currentUser.state} style={{ width: 160, marginLeft: 12 }} onChange={handleProgressChange} disabled>
-                  <Option value="一轮考核">一轮考核</Option>
-                  <Option value="二轮考核">二轮考核</Option>
-                  <Option value="面试">面试</Option>
-                  <Option value="未通过">未通过</Option>
-                </Select> 
-                */}
+                <Space>
+                  <Tag>
+                    {statusOptions.find((o) => o.value === currentUser.state)
+                      ?.label ||
+                      currentUser.state ||
+                      '未开始'}
+                  </Tag>
+                  <Select
+                    defaultValue={currentUser.state}
+                    style={{ width: 160 }}
+                    onChange={handleStatusChange}
+                    loading={userLoading}
+                  >
+                    {statusOptions.map((opt) => (
+                      <Option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Space>
+              </Descriptions.Item>
+              <Descriptions.Item label="联系方式">
+                手机：{currentUser.phoneNumber || '-'} <br /> 邮箱：
+                {currentUser.email || '-'}
               </Descriptions.Item>
               <Descriptions.Item label="个人简介">
                 {currentUser.userIntro || '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="联系方式">
-                手机：{currentUser.phoneNumber || '-'} <br />
-                邮箱：{currentUser.email || '-'}
-              </Descriptions.Item>
             </Descriptions>
           ) : (
-            // 如果加载完成但没有数据，显示提示信息
-            !userLoading && <p>未找到该用户的信息。</p>
+            <p>未找到该用户的信息。</p>
           )}
         </Card>
 
-        {/* 7. 【已注释】将所有与评分相关的 Card 全部注释掉 */}
-        {/*
-        <Card title="评分记录" style={{ marginTop: 20 }}>
-          // ... 评分列表 ...
-        </Card>
+        {/* 5. 遍历显示所有考核信息 */}
+        {assessmentLoading ? (
+          <Card loading style={{ marginTop: 20 }} />
+        ) : (
+          assessments.map((assessment: AssessmentInfo, index: number) => (
+            <Card
+              key={assessment.accessId}
+              title={`考核阶段: ${assessment.accessType} (${assessment.direction})`}
+              style={{ marginTop: 20 }}
+            >
+              <Descriptions bordered size="small" column={1}>
+                <Descriptions.Item label="Access ID">
+                  {assessment.accessId}
+                </Descriptions.Item>
+                <Descriptions.Item label="创建时间">
+                  {new Date(assessment.createTime).toLocaleString()}
+                </Descriptions.Item>
+              </Descriptions>
 
-        <Card title="添加评分" style={{ marginTop: 20 }}>
-          // ... 添加评分表单 ...
-        </Card>
+              <Divider>评分记录</Divider>
+              <List
+                dataSource={assessment.scoreCommentList}
+                locale={{ emptyText: <Empty description="暂无评分记录" /> }}
+                renderItem={(s: Score) => (
+                  <List.Item
+                    actions={[
+                      <Button key="edit" type="link" onClick={handleMockAction}>
+                        编辑
+                      </Button>,
+                      <Button
+                        key="del"
+                        type="link"
+                        danger
+                        onClick={handleMockAction}
+                      >
+                        删除
+                      </Button>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      title={`${s.comment} — ${s.score} 分`}
+                      description={`评分人ID: ${s.userId}`}
+                    />
+                  </List.Item>
+                )}
+              />
 
-        <Modal title="编辑评分">
-          // ... 编辑评分模态框 ...
-        </Modal>
-        */}
+              <Divider>添加新评分</Divider>
+              <Form
+                form={form}
+                layout="vertical"
+                onFinish={(values) =>
+                  onFinishAddScore(values, assessment.accessId)
+                }
+              >
+                <Form.Item
+                  name="score"
+                  label="分数"
+                  rules={[{ required: true, message: '请输入分数' }]}
+                >
+                  <InputNumber min={0} max={100} style={{ width: '100%' }} />
+                </Form.Item>
+                <Form.Item name="comment" label="评价 (例如：完成度高)">
+                  <Input.TextArea rows={3} />
+                </Form.Item>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit">
+                    为本次考核提交评分
+                  </Button>
+                </Form.Item>
+              </Form>
+            </Card>
+          ))
+        )}
       </ConfigProvider>
     </div>
   );

@@ -63,16 +63,30 @@ export interface Score {
   adminName: string;
 }
 
+// 考核信息类型
+export interface AssessmentInfo {
+  accessId: number;
+  studentDTO: User;
+  accessType: string;
+  direction: string;
+  appointmentSlotID: number;
+  state: number;
+  scoreCommentList: Score[];
+  createTime: string;
+  updateTime: string;
+}
+
 // 管理员登录请求体类型
 export interface AdminLoginParams {
   userName: string;
   password?: string;
 }
 
-// 定义 thunk 成功后返回的数据结构
-export interface LoginPayload {
+// 管理员登录返回数据类型
+export interface LoginResponseData {
+  user: User;
   token: string;
-  adminName: string;
+  refreshToken: string;
 }
 
 // 获取用户列表的 thunk
@@ -85,6 +99,6 @@ export interface FetchUsersPayload {
 export interface FetchUsersParams {
   pageNum: number;
   pageSize: number;
-  status?: string;
-  direction?: string;
+  status: string;
+  direction: string;
 }

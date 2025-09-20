@@ -3,13 +3,13 @@
 import api from './api'; // 确保导入的是配置好的 axiosInstance
 import type {
   User,
-  Score,
   AppointmentSlot,
   AdminLoginParams,
   ApiResponse,
   LoginResponseData,
   FetchUsersParams,
   SubmitScoreParams,
+  AssessmentInfo,
 } from '../types';
 
 // =================================================================
@@ -21,7 +21,7 @@ import type {
  * @description POST /api/admin/login
  */
 export const adminLoginAPI = (data: AdminLoginParams) => {
-  return api.post<ApiResponse<LoginResponseData>>('/admin/login', data);
+  return api.post<ApiResponse<LoginResponseData>>('/api/admin/login', data);
 };
 
 /**
@@ -30,7 +30,7 @@ export const adminLoginAPI = (data: AdminLoginParams) => {
  */
 export const getApplyListAPI = (params: FetchUsersParams) => {
   return api.get<ApiResponse<{ data: User[]; total: number }>>(
-    '/admin/applyList',
+    '/api/admin/applyList',
     { params }
   );
 };
@@ -40,7 +40,9 @@ export const getApplyListAPI = (params: FetchUsersParams) => {
  * @description POST /api/admin/apply/score
  */
 export const submitScoreAPI = (params: SubmitScoreParams) => {
-  return api.post<ApiResponse<string>>('/admin/apply/score', null, { params });
+  return api.post<ApiResponse<string>>('/api/admin/apply/score', null, {
+    params,
+  });
 };
 
 /**
@@ -50,7 +52,7 @@ export const submitScoreAPI = (params: SubmitScoreParams) => {
 export const addAppointmentTimeAPI = (
   params: Omit<AppointmentSlot, 'id' | 'appointedCount'>
 ) => {
-  return api.post<ApiResponse<string>>('/admin/addAppointmentTime', null, {
+  return api.post<ApiResponse<string>>('/api/admin/addAppointmentTime', null, {
     params,
   });
 };
@@ -60,7 +62,9 @@ export const addAppointmentTimeAPI = (
  * @description GET /api/admin/appointmentTimeList
  */
 export const getAppointmentTimeListAPI = () => {
-  return api.get<ApiResponse<AppointmentSlot[]>>('/admin/appointmentTimeList');
+  return api.get<ApiResponse<AppointmentSlot[]>>(
+    '/api/admin/appointmentTimeList'
+  );
 };
 
 /**
@@ -68,7 +72,7 @@ export const getAppointmentTimeListAPI = () => {
  * @description GET /api/admin/getUserInfo
  */
 export const getUserInfoAPI = (params: { userId: number }) => {
-  return api.get<ApiResponse<User>>('/admin/getUserInfo', { params });
+  return api.get<ApiResponse<User>>('/api/admin/getUserInfo', { params });
 };
 
 /**
@@ -76,7 +80,7 @@ export const getUserInfoAPI = (params: { userId: number }) => {
  * @description POST /api/admin/setRecruitStatus
  */
 export const setRecruitStatusAPI = (params: { status: string }) => {
-  return api.post<ApiResponse<string>>('/admin/setRecruitStatus', null, {
+  return api.post<ApiResponse<string>>('/api/admin/setRecruitStatus', null, {
     params,
   });
 };
@@ -87,7 +91,7 @@ export const setRecruitStatusAPI = (params: { status: string }) => {
  */
 export const updateAppointmentSlotAPI = (data: AppointmentSlot) => {
   return api.post<ApiResponse<AppointmentSlot>>(
-    '/admin/updateAppointmentSlot',
+    '/api/admin/updateAppointmentSlot',
     data
   );
 };
@@ -99,9 +103,13 @@ export const updateAppointmentSlotAPI = (data: AppointmentSlot) => {
 export const deleteAppointmentSlotAPI = (params: {
   appointmentSlotId: number;
 }) => {
-  return api.post<ApiResponse<string>>('/admin/deleteAppointmentSlot', null, {
-    params,
-  });
+  return api.post<ApiResponse<string>>(
+    '/api/admin/deleteAppointmentSlot',
+    null,
+    {
+      params,
+    }
+  );
 };
 
 /**
@@ -112,15 +120,17 @@ export const updateUserStatusAPI = (data: {
   userId: number;
   status: string;
 }) => {
-  return api.post<ApiResponse<string>>('/admin/updateUserStatus', data);
+  return api.post<ApiResponse<string>>('/api/admin/updateUserStatus', data);
 };
 
 /**
  * @name 获取用户的评分
  * @description GET /api/admin/getScore
  */
-export const getScoresByUserIdAPI = (params: { userId: number }) => {
-  return api.get<ApiResponse<Score[]>>('/admin/getScore', { params });
+export const getAssessmentInfo = (params: { userId: number }) => {
+  return api.get<ApiResponse<AssessmentInfo[]>>('/api/admin/getScore', {
+    params,
+  });
 };
 
 /**
@@ -130,7 +140,7 @@ export const getScoresByUserIdAPI = (params: { userId: number }) => {
 export const getUsersByAppointmentTimeAPI = (params: {
   appointmentSlotId: number;
 }) => {
-  return api.get<ApiResponse<User[]>>('/admin/getUsersByAppointmentTime', {
+  return api.get<ApiResponse<User[]>>('/api/admin/getUsersByAppointmentTime', {
     params,
   });
 };
