@@ -50,7 +50,9 @@ export const submitScoreAPI = (params: SubmitScoreParams) => {
  * @description POST /api/admin/addAppointmentTime
  */
 export const addAppointmentTimeAPI = (
-  params: Omit<AppointmentSlot, 'id' | 'appointedCount'>
+  params: Omit<AppointmentSlot, 'id' | 'appointedCount' | 'capacity'> & {
+    interviewNumber: number;
+  }
 ) => {
   return api.post<ApiResponse<string>>('/api/admin/addAppointmentTime', null, {
     params,

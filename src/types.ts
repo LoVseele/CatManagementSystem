@@ -38,11 +38,12 @@ export interface Appointment {
 // 预约时间段类型 (
 export interface AppointmentSlot {
   id?: number;
-  interviewDate: string;
-  interviewStartTime: string;
-  interviewEndTime: string;
-  interviewNumber: number;
-  interviewCurrentNumber: number;
+  accessType: string;
+  appointmentDate: string;
+  startTime: string;
+  endTime: string;
+  capacity: number;
+  appointedCount?: number;
   direction: string;
 }
 

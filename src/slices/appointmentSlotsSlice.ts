@@ -45,8 +45,16 @@ export const addSlot = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const apiResponse = await addAppointmentTimeAPI(params);
+      const { capacity, ...rest } = params;
+      const apiParams = {
+        ...rest,
+        interviewNumber: capacity,
+      };
+
+      const apiResponse = await addAppointmentTimeAPI(apiParams);
+      console.log(apiParams);
       const response = apiResponse.data;
+      console.log(response);
       if (response.code !== 200)
         throw new Error(response.message || '新增时间段失败');
     } catch (err: any) {
@@ -64,7 +72,8 @@ export const updateSlot = createAsyncThunk<AppointmentSlot, AppointmentSlot>(
       const response = apiResponse.data;
       if (response.code !== 200)
         throw new Error(response.message || '更新时间段失败');
-      return response.data;
+      // 确保返回更新后的数据以便在 state 中更新
+      return payload;
     } catch (err: any) {
       return rejectWithValue(err.response?.data?.message || err.message);
     }
@@ -124,7 +133,9 @@ const appointmentSlotsSlice = createSlice({
           const index = state.list.findIndex(
             (slot) => slot.id === action.payload.id
           );
-          if (index !== -1) state.list[index] = action.payload;
+          if (index !== -1) {
+            state.list[index] = action.payload;
+          }
         }
       )
       .addCase(updateSlot.rejected, handleRejected)

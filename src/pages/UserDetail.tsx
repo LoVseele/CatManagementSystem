@@ -196,7 +196,7 @@ export default function UserDetail() {
                   >
                     <List.Item.Meta
                       title={`${s.comment} — ${s.score} 分`}
-                      description={`评分人ID: ${s.userId}`}
+                      description={`评分人: ${s.adminName}`}
                     />
                   </List.Item>
                 )}

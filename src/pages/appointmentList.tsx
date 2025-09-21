@@ -14,6 +14,7 @@ import {
   ConfigProvider,
   Card,
   Alert,
+  Select,
 } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import {
@@ -26,7 +27,7 @@ import {
   fetchAppointmentsBySlot,
   clearAppointments,
 } from '../slices/appointmentsSlice';
-import type { AppointmentSlot, User } from '../types';
+import type { AppointmentSlot } from '../types';
 
 export default function AppointmentPage() {
   const dispatch = useAppDispatch();
@@ -57,7 +58,14 @@ export default function AppointmentPage() {
 
   const handleOpenSlotModal = (slot: AppointmentSlot | null) => {
     setEditingSlot(slot);
-    form.setFieldsValue(slot || { direction: '前端', interviewNumber: 1 });
+    // 使用接口文档中的字段来设置表单值
+    form.setFieldsValue(
+      slot || {
+        direction: '前端',
+        accessType: '一面',
+        capacity: 10,
+      }
+    );
     setSlotModalVisible(true);
   };
 
@@ -70,13 +78,20 @@ export default function AppointmentPage() {
   const handleSubmitSlot = async () => {
     try {
       const values = await form.validateFields();
-      const payload = { ...(editingSlot || {}), ...values };
+      // 确保 payload 结构与 AppointmentSlot 类型匹配
+      const payload: AppointmentSlot = {
+        ...(editingSlot || {}),
+        ...values,
+      };
 
       let resultAction;
-      if (editingSlot) {
-        resultAction = await dispatch(updateSlot(payload as AppointmentSlot));
+      if (editingSlot && editingSlot.id) {
+        // 更新操作需要 id
+        resultAction = await dispatch(updateSlot(payload));
       } else {
-        resultAction = await dispatch(addSlot(payload));
+        // 新增操作不需要 id
+        const { id, ...addPayload } = payload;
+        resultAction = await dispatch(addSlot(addPayload as any));
       }
 
       if (
@@ -87,10 +102,13 @@ export default function AppointmentPage() {
         handleCloseSlotModal();
         dispatch(fetchSlots()); // Refresh the list
       } else {
-        throw new Error('操作失败');
+        // 处理 thunk reject 的情况
+        const errorMessage = (resultAction.payload as string) || '操作失败';
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
-      message.error(err.message || '保存失败');
+      // 捕获校验错误或 thunk 抛出的错误
+      message.error(err.message || '保存失败，请检查表单输入。');
     }
   };
 
@@ -116,11 +134,12 @@ export default function AppointmentPage() {
   // --- Column Definitions ---
 
   const slotColumns = [
-    { title: '日期', dataIndex: 'interviewDate', key: 'interviewDate' },
+    { title: '考核类型', dataIndex: 'accessType', key: 'accessType' },
+    { title: '日期', dataIndex: 'appointmentDate', key: 'appointmentDate' },
     { title: '开始时间', dataIndex: 'startTime', key: 'startTime' },
     { title: '结束时间', dataIndex: 'endTime', key: 'endTime' },
     { title: '方向', dataIndex: 'direction', key: 'direction' },
-    { title: '人数上限', dataIndex: 'interviewNumber', key: 'interviewNumber' },
+    { title: '人数上限', dataIndex: 'capacity', key: 'capacity' },
     { title: '当前预约数', dataIndex: 'appointedCount', key: 'appointedCount' },
     {
       title: '操作',
@@ -152,12 +171,6 @@ export default function AppointmentPage() {
   return (
     <ConfigProvider theme={{ token: { colorPrimary: 'rgba(253, 178, 2, 1)' } }}>
       <Card title="时间段管理">
-        <Alert
-          message="新交互说明：请在下方列表的“操作”栏点击“查看预约”，以查看该时间段已预约的用户列表。"
-          type="info"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
         <Button
           type="primary"
           onClick={() => handleOpenSlotModal(null)}
@@ -184,36 +197,54 @@ export default function AppointmentPage() {
         <Form
           form={form}
           layout="vertical"
-          initialValues={{ direction: '前端', interviewNumber: 1 }}
+          initialValues={{
+            direction: '前端',
+            accessType: '一面',
+            capacity: 10,
+          }}
         >
           <Form.Item
-            name="interviewDate"
+            name="accessType"
+            label="考核类型"
+            rules={[{ required: true, message: '请输入考核类型' }]}
+          >
+            <Input placeholder="例如：一面、一轮考核" />
+          </Form.Item>
+          <Form.Item
+            name="appointmentDate"
             label="日期"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: '请输入日期' }]}
           >
             <Input placeholder="YYYY-MM-DD" />
           </Form.Item>
           <Form.Item
             name="startTime"
             label="开始时间"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: '请输入开始时间' }]}
           >
             <Input placeholder="HH:mm" />
           </Form.Item>
           <Form.Item
             name="endTime"
             label="结束时间"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: '请输入结束时间' }]}
           >
             <Input placeholder="HH:mm" />
           </Form.Item>
-          <Form.Item name="direction" label="方向" rules={[{ required: true }]}>
-            <Input placeholder="前端 / 后端" />
+          <Form.Item
+            name="direction"
+            label="方向"
+            rules={[{ required: true, message: '请选择方向' }]}
+          >
+            <Select>
+              <Select.Option value="前端">前端</Select.Option>
+              <Select.Option value="后端">后端</Select.Option>
+            </Select>
           </Form.Item>
           <Form.Item
-            name="interviewNumber"
+            name="capacity"
             label="人数上限"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: '请输入人数上限' }]}
           >
             <InputNumber min={1} style={{ width: '100%' }} />
           </Form.Item>
@@ -223,7 +254,7 @@ export default function AppointmentPage() {
       {/* View Bookings Modal */}
       <Modal
         open={bookingsModalVisible}
-        title={`“${selectedSlot?.interviewDate} ${selectedSlot?.interviewStartTime}”的预约列表`}
+        title={`“${selectedSlot?.appointmentDate} ${selectedSlot?.startTime}”的预约列表`}
         width={800}
         onCancel={handleCloseBookingsModal}
         footer={[
