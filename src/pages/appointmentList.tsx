@@ -1,6 +1,4 @@
-// lovseele/catmanagementsystem/CatManagementSystem-feat/src/pages/appointmentList.tsx
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   Table,
   Button,
@@ -13,8 +11,8 @@ import {
   Space,
   ConfigProvider,
   Card,
-  Alert,
   Select,
+  Pagination,
 } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import {
@@ -29,18 +27,19 @@ import {
 } from '../slices/appointmentsSlice';
 import type { AppointmentSlot } from '../types';
 
+const PAGE_SIZE = 6; // 定义每页显示的数量
+
 export default function AppointmentPage() {
   const dispatch = useAppDispatch();
   const [form] = Form.useForm();
 
-  // --- State for Time Slots ---
   const { list: slots, loading: slotLoading } = useAppSelector(
     (s) => s.appointmentSlots
   );
   const [slotModalVisible, setSlotModalVisible] = useState(false);
   const [editingSlot, setEditingSlot] = useState<AppointmentSlot | null>(null);
+  const [page, setPage] = useState(1);
 
-  // --- State for Booked Appointments (Users) ---
   const { list: appointments, loading: apptLoading } = useAppSelector(
     (s) => s.appointments
   );
@@ -49,16 +48,18 @@ export default function AppointmentPage() {
     null
   );
 
-  // Initial data fetch for slots
   useEffect(() => {
     dispatch(fetchSlots());
   }, [dispatch]);
 
-  // --- Time Slot Management Logic ---
+  // 计算当前页的数据
+  const paginatedData = useMemo(() => {
+    const startIndex = (page - 1) * PAGE_SIZE;
+    return slots.slice(startIndex, startIndex + PAGE_SIZE);
+  }, [slots, page]);
 
   const handleOpenSlotModal = (slot: AppointmentSlot | null) => {
     setEditingSlot(slot);
-    // 使用接口文档中的字段来设置表单值
     form.setFieldsValue(
       slot || {
         direction: '前端',
@@ -75,10 +76,10 @@ export default function AppointmentPage() {
     form.resetFields();
   };
 
+  // 新增/更改时间段逻辑
   const handleSubmitSlot = async () => {
     try {
       const values = await form.validateFields();
-      // 确保 payload 结构与 AppointmentSlot 类型匹配
       const payload: AppointmentSlot = {
         ...(editingSlot || {}),
         ...values,
@@ -86,10 +87,8 @@ export default function AppointmentPage() {
 
       let resultAction;
       if (editingSlot && editingSlot.id) {
-        // 更新操作需要 id
         resultAction = await dispatch(updateSlot(payload));
       } else {
-        // 新增操作不需要 id
         const { id, ...addPayload } = payload;
         resultAction = await dispatch(addSlot(addPayload as any));
       }
@@ -100,14 +99,12 @@ export default function AppointmentPage() {
       ) {
         message.success(editingSlot ? '更新成功' : '新增成功');
         handleCloseSlotModal();
-        dispatch(fetchSlots()); // Refresh the list
+        dispatch(fetchSlots());
       } else {
-        // 处理 thunk reject 的情况
         const errorMessage = (resultAction.payload as string) || '操作失败';
         throw new Error(errorMessage);
       }
     } catch (err: any) {
-      // 捕获校验错误或 thunk 抛出的错误
       message.error(err.message || '保存失败，请检查表单输入。');
     }
   };
@@ -116,8 +113,6 @@ export default function AppointmentPage() {
     await dispatch(deleteSlot(id));
     message.success('删除成功');
   };
-
-  // --- Appointment Bookings Logic ---
 
   const handleOpenBookingsModal = (slot: AppointmentSlot) => {
     setSelectedSlot(slot);
@@ -128,10 +123,8 @@ export default function AppointmentPage() {
   const handleCloseBookingsModal = () => {
     setBookingsModalVisible(false);
     setSelectedSlot(null);
-    dispatch(clearAppointments()); // Clear the list when modal closes
+    dispatch(clearAppointments());
   };
-
-  // --- Column Definitions ---
 
   const slotColumns = [
     { title: '考核类型', dataIndex: 'accessType', key: 'accessType' },
@@ -153,6 +146,8 @@ export default function AppointmentPage() {
           <Popconfirm
             title="确认删除？"
             onConfirm={() => handleDeleteSlot(slot.id!)}
+            okText="确认"
+            cancelText="取消"
           >
             <Button danger>删除</Button>
           </Popconfirm>
@@ -181,18 +176,29 @@ export default function AppointmentPage() {
         <Table
           rowKey="id"
           loading={slotLoading}
-          dataSource={slots}
+          dataSource={paginatedData}
           columns={slotColumns}
-          pagination={{ pageSize: 8 }}
+          pagination={false}
+          style={{ height: '60vh' }}
         />
+        <div style={{ position: 'absolute', bottom: 20, right: 30 }}>
+          <Pagination
+            current={page}
+            pageSize={PAGE_SIZE}
+            total={slots.length}
+            onChange={(newPage) => setPage(newPage)}
+          />
+        </div>
       </Card>
 
-      {/* Add/Edit Slot Modal */}
+      {/* 新增/更改时间段弹窗 */}
       <Modal
         open={slotModalVisible}
         title={editingSlot ? '编辑时间段' : '新增时间段'}
         onCancel={handleCloseSlotModal}
         onOk={handleSubmitSlot}
+        okText="确认"
+        cancelText="取消"
       >
         <Form
           form={form}
@@ -251,7 +257,7 @@ export default function AppointmentPage() {
         </Form>
       </Modal>
 
-      {/* View Bookings Modal */}
+      {/*查看当前时间段预约弹窗*/}
       <Modal
         open={bookingsModalVisible}
         title={`“${selectedSlot?.appointmentDate} ${selectedSlot?.startTime}”的预约列表`}

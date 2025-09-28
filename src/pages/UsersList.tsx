@@ -37,22 +37,34 @@ export const statusOptions = [
 
 export default function UsersList() {
   const dispatch = useAppDispatch();
-  // 从 store 中获取完整的用户列表，并重命名为 allUsers
   const { list: allUsers, loading } = useAppSelector((s) => s.users);
   const navigate = useNavigate();
 
-  // 管理筛选条件与当前页码
+  // 实时输入值
   const [keyword, setKeyword] = useState('');
+  // 防抖用值
+  const [debouncedKeyword, setDebouncedKeyword] = useState('');
+
   const [direction, setDirection] = useState<string>('');
   const [status, setStatus] = useState<string>('');
   const [page, setPage] = useState(1);
 
-  // 获取用户数据
   useEffect(() => {
     dispatch(
       fetchUsers({ pageNum: 1, pageSize: 99, direction: '', status: '' })
     );
   }, [dispatch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedKeyword(keyword);
+    }, 500);
+
+    // 清除上一个定时器
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [keyword]);
 
   // 数据筛选
   const filteredData = useMemo(() => {
@@ -64,12 +76,12 @@ export default function UsersList() {
         u.userNumber || ''
       }`
         .toLowerCase()
-        .includes(keyword.toLowerCase());
+        .includes(debouncedKeyword.toLowerCase());
       const matchDirection = !direction || u.direction === direction;
       const matchStatus = !status || u.state === status;
       return matchKeyword && matchDirection && matchStatus;
     });
-  }, [allUsers, keyword, direction, status]);
+  }, [allUsers, debouncedKeyword, direction, status]);
 
   //  对筛选后的结果 (filteredData) 进行前端分页
   const paginatedData = useMemo(() => {
@@ -139,6 +151,7 @@ export default function UsersList() {
             allowClear
             style={{ width: 240 }}
           />
+
           <Select
             value={direction}
             style={{ width: 160 }}
@@ -174,7 +187,6 @@ export default function UsersList() {
         </Space>
         <Table
           rowKey="userId"
-          // 只有在首次加载时显示 loading
           loading={loading && !allUsers.length}
           columns={columns as any}
           dataSource={paginatedData}

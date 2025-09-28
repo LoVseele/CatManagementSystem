@@ -15,9 +15,6 @@ export default function Login() {
 
   const onFinish = async (values: any) => {
     const resultAction = await dispatch(login(values));
-
-    //  Redux Toolkit 的 createAsyncThunk 会返回一个带有 `type` 属性的 action 对象。
-    //    我们可以通过检查 action.type 是否以 'fulfilled' 结尾来判断异步操作是否成功。
     if (login.fulfilled.match(resultAction)) {
       const to = location.state?.from || '/';
       navigate(to, { replace: true });
@@ -49,7 +46,6 @@ export default function Login() {
           />
         }
       >
-        {/* 这里的 error 重新由 Redux store 提供 */}
         {error && (
           <Alert message={error} type="error" style={{ marginBottom: 12 }} />
         )}
@@ -64,7 +60,6 @@ export default function Login() {
           <Form.Item name="password" label="密码" rules={[{ required: true }]}>
             <Input.Password />
           </Form.Item>
-          {/* loading 状态也重新由 Redux store 提供 */}
           <Button type="primary" htmlType="submit" block loading={loading}>
             登录
           </Button>

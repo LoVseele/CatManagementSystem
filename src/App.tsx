@@ -49,6 +49,9 @@ export default function App() {
             </div>
 
             <div style={{ color: '#210808ff' }}>
+              <Link to="/" className="header-appointment">
+                用户管理
+              </Link>
               <Link to="/appointment" className="header-appointment">
                 预约管理
               </Link>

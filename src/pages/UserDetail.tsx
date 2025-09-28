@@ -50,6 +50,7 @@ export default function UserDetail() {
     }
   }, [id, dispatch]);
 
+  // 更新用户状态功能
   const handleStatusChange = async (newStatus: string) => {
     if (!currentUser) return;
     const resultAction = await dispatch(
@@ -62,6 +63,7 @@ export default function UserDetail() {
     }
   };
 
+  // 添加打分功能
   const onFinishAddScore = async (values: any, accessId: number) => {
     if (!currentUser) return;
     const payload = {
@@ -80,7 +82,7 @@ export default function UserDetail() {
   };
 
   const handleMockAction = () => {
-    message.info('此功能暂未开放，需要等待后端提供相应接口。');
+    message.info('此功能暂未开放。');
   };
 
   if (userLoading && !currentUser) {
@@ -122,13 +124,6 @@ export default function UserDetail() {
                       currentUser.state ||
                       '未开始'}
                   </Tag>
-                  {/*
-                    BUG 修复:
-                    将 `defaultValue` 修改为 `value`。
-                    `defaultValue` 只在组件初次加载时有效，不会随 state 的变化而更新。
-                    `value` 会让 Select 组件成为一个受控组件，其显示的值会严格跟随 `currentUser.state` 的变化而变化。
-                    这样，当 dispatch 更新状态成功后，`currentUser` 对象改变，Select 的显示也会同步刷新。
-                  */}
                   <Select
                     value={currentUser.state}
                     style={{ width: 160 }}
