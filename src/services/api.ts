@@ -15,7 +15,6 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(config);
     return config;
   },
   (error) => {
@@ -26,6 +25,7 @@ api.interceptors.request.use(
 // 4. 配置响应拦截器
 api.interceptors.response.use(
   (response) => {
+    console.log(response.data);
     return response;
   },
   (error) => {

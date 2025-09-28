@@ -208,7 +208,7 @@ export default function AppointmentPage() {
             label="考核类型"
             rules={[{ required: true, message: '请输入考核类型' }]}
           >
-            <Input placeholder="例如：一面、一轮考核" />
+            <Input placeholder="例如：初面、一轮考核、二轮考核" />
           </Form.Item>
           <Form.Item
             name="appointmentDate"
@@ -222,14 +222,14 @@ export default function AppointmentPage() {
             label="开始时间"
             rules={[{ required: true, message: '请输入开始时间' }]}
           >
-            <Input placeholder="HH:mm" />
+            <Input placeholder="HH:MM:SS" />
           </Form.Item>
           <Form.Item
             name="endTime"
             label="结束时间"
             rules={[{ required: true, message: '请输入结束时间' }]}
           >
-            <Input placeholder="HH:mm" />
+            <Input placeholder="HH:MM:SS" />
           </Form.Item>
           <Form.Item
             name="direction"

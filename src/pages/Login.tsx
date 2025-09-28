@@ -2,30 +2,26 @@
 
 import { Card, Form, Input, Button, Alert } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { login } from '../slices/authSlice'; // 1. 重新导入 login action
+import { login } from '../slices/authSlice';
 import { useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/images/logo.png';
 
 export default function Login() {
-  // 2. 重新从 Redux store 中获取状态
+  // 从 Redux store 中获取状态
   const dispatch = useAppDispatch();
   const { loading, error } = useAppSelector((s) => s.auth);
   const navigate = useNavigate();
   const location = useLocation() as any;
 
   const onFinish = async (values: any) => {
-    // 3. dispatch a login action, Redux Toolkit 会处理 Promise
-    console.log('表单提交的 values:', values);
     const resultAction = await dispatch(login(values));
 
-    // 4. Redux Toolkit 的 createAsyncThunk 会返回一个带有 `type` 属性的 action 对象。
+    //  Redux Toolkit 的 createAsyncThunk 会返回一个带有 `type` 属性的 action 对象。
     //    我们可以通过检查 action.type 是否以 'fulfilled' 结尾来判断异步操作是否成功。
     if (login.fulfilled.match(resultAction)) {
       const to = location.state?.from || '/';
       navigate(to, { replace: true });
     }
-    // 如果失败了，authSlice 的 rejected reducer 会自动更新 error 状态，
-    // Alert 组件会根据 error 状态自动显示错误信息。
   };
 
   return (

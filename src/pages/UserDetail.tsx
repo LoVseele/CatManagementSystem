@@ -1,6 +1,6 @@
 // lovseele/catmanagementsystem/CatManagementSystem-feat/src/pages/UserDetail.tsx
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Card,
@@ -20,7 +20,6 @@ import {
 } from 'antd';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { fetchUserById, updateUserStatus } from '../slices/usersSlice';
-// 1. 导入新的 assessmentSlice 的 actions
 import { fetchAssessmentsByUser, addScore } from '../slices/assessmentSlice';
 import type { Score, AssessmentInfo } from '../types';
 import { statusOptions } from './UsersList';
@@ -35,7 +34,6 @@ export default function UserDetail() {
   const { current: currentUser, loading: userLoading } = useAppSelector(
     (s) => s.users
   );
-  // 2. 从 assessment state 中获取数据
   const { assessments, loading: assessmentLoading } = useAppSelector(
     (s) => s.assessment
   );
@@ -47,7 +45,6 @@ export default function UserDetail() {
       const userId = parseInt(id, 10);
       if (!isNaN(userId)) {
         dispatch(fetchUserById(userId));
-        // 3. 派发 action 获取考核信息
         dispatch(fetchAssessmentsByUser(userId));
       }
     }
@@ -65,7 +62,6 @@ export default function UserDetail() {
     }
   };
 
-  // 4. onFinish 现在需要知道是为哪个 accessId 提交
   const onFinishAddScore = async (values: any, accessId: number) => {
     if (!currentUser) return;
     const payload = {
@@ -77,7 +73,6 @@ export default function UserDetail() {
     if (addScore.fulfilled.match(resultAction)) {
       message.success('评分已成功提交');
       form.resetFields();
-      // 提交成功后重新获取该用户的考核信息以刷新
       dispatch(fetchAssessmentsByUser(currentUser.userId));
     } else {
       message.error('添加评分失败');
@@ -88,7 +83,7 @@ export default function UserDetail() {
     message.info('此功能暂未开放，需要等待后端提供相应接口。');
   };
 
-  if (userLoading) {
+  if (userLoading && !currentUser) {
     return <Card loading={true} style={{ margin: 20 }} />;
   }
 
@@ -97,7 +92,6 @@ export default function UserDetail() {
       <ConfigProvider
         theme={{ token: { colorPrimary: 'rgba(253, 178, 2, 1)' } }}
       >
-        {/* 用户基本信息卡片 */}
         <Card
           title="用户详情"
           extra={<Button onClick={() => navigate(-1)}>返回</Button>}
@@ -128,8 +122,15 @@ export default function UserDetail() {
                       currentUser.state ||
                       '未开始'}
                   </Tag>
+                  {/*
+                    BUG 修复:
+                    将 `defaultValue` 修改为 `value`。
+                    `defaultValue` 只在组件初次加载时有效，不会随 state 的变化而更新。
+                    `value` 会让 Select 组件成为一个受控组件，其显示的值会严格跟随 `currentUser.state` 的变化而变化。
+                    这样，当 dispatch 更新状态成功后，`currentUser` 对象改变，Select 的显示也会同步刷新。
+                  */}
                   <Select
-                    defaultValue={currentUser.state}
+                    value={currentUser.state}
                     style={{ width: 160 }}
                     onChange={handleStatusChange}
                     loading={userLoading}
@@ -155,11 +156,10 @@ export default function UserDetail() {
           )}
         </Card>
 
-        {/* 5. 遍历显示所有考核信息 */}
         {assessmentLoading ? (
           <Card loading style={{ marginTop: 20 }} />
         ) : (
-          assessments.map((assessment: AssessmentInfo, index: number) => (
+          assessments.map((assessment: AssessmentInfo) => (
             <Card
               key={assessment.accessId}
               title={`考核阶段: ${assessment.accessType} (${assessment.direction})`}

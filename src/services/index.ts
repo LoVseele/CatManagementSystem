@@ -60,6 +60,33 @@ export const addAppointmentTimeAPI = (
 };
 
 /**
+ * @name 更改预约时间段
+ * @description POST /api/admin/updateAppointmentSlot
+ */
+export const updateAppointmentSlotAPI = (data: AppointmentSlot) => {
+  return api.post<ApiResponse<AppointmentSlot>>(
+    '/api/admin/updateAppointmentSlot',
+    data
+  );
+};
+
+/**
+ * @name 删除预约时间段
+ * @description POST /api/admin/deleteAppointmentSlot
+ */
+export const deleteAppointmentSlotAPI = (params: {
+  appointmentSlotId: number;
+}) => {
+  return api.post<ApiResponse<string>>(
+    '/api/admin/deleteAppointmentSlot',
+    null,
+    {
+      params,
+    }
+  );
+};
+
+/**
  * @name 管理员获取预约时间列表
  * @description GET /api/admin/appointmentTimeList
  */
@@ -85,33 +112,6 @@ export const setRecruitStatusAPI = (params: { status: string }) => {
   return api.post<ApiResponse<string>>('/api/admin/setRecruitStatus', null, {
     params,
   });
-};
-
-/**
- * @name 更改预约时间段
- * @description POST /api/admin/updateAppointmentSlot
- */
-export const updateAppointmentSlotAPI = (data: AppointmentSlot) => {
-  return api.post<ApiResponse<AppointmentSlot>>(
-    '/api/admin/updateAppointmentSlot',
-    data
-  );
-};
-
-/**
- * @name 删除预约时间段
- * @description POST /api/admin/deleteAppointmentSlot
- */
-export const deleteAppointmentSlotAPI = (params: {
-  appointmentSlotId: number;
-}) => {
-  return api.post<ApiResponse<string>>(
-    '/api/admin/deleteAppointmentSlot',
-    null,
-    {
-      params,
-    }
-  );
 };
 
 /**
